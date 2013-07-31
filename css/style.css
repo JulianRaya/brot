@@ -1,0 +1,59 @@
+body {
+	font-family: monospace;
+}
+
+#cont {
+	overflow: hidden;
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+}
+
+#controls {
+	width: 200px;
+	position: fixed;
+	background: rgba(255, 255, 255, 0.8);
+	box-shadow: 1px 2px 2px rgba(0, 0, 0, 0.5);
+	border-radius: 3px;
+	top: 10px;
+	left: 10px;
+	border: #686868 solid 1px;
+	padding: 5px;
+}
+
+#controls label {
+	display: block;
+	background: #333;
+	padding: 5px;
+	color: #fff;
+	margin-top: 10px;
+}
+
+#controls label:first-child {
+	margin-top: 0;
+}
+
+#controls label .key {
+	font-size: 9px;
+	float: right;
+	color: rgb(0, 0, 0);
+	background: rgb(166, 212, 255);
+	padding: 2px;
+}
+
+#controls input {
+	width: 98%;
+	display: block
+}
+
+#controls div:last-child {
+	padding: 2px;
+	margin-top: 10px;
+	border: 1px solid #333;
+}
+
+#renderTime {
+	font-weight: bold;
+}
