@@ -7,6 +7,7 @@ Uses web workers and canvas to render the beautiful Mandelbrot set fractal insan
 
 View demo at http://julianraya.com/
 
-Arrow keys to pan the image.
-ctrl + Arrow up/down zooms in/out
-ctrl + Arrow left/right changes maximum iterations (higher numbers give the fractal more depth)
+Use the arrow keys to pan the image.
+Use ctrl + Arrow up/down zooms in/out.
+Use ctrl + Arrow left/right changes maximum iterations (higher numbers give the fractal more depth).
+Values can also be edited manually in the control panel.
