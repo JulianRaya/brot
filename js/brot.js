@@ -1,4 +1,4 @@
-/**/
+/*Julian Raya 2013*/
 
 var doc = document;
 var win = window;
@@ -65,7 +65,7 @@ xtnd(BrotCtrl.prototype, {
 		for (var key in this.elems) {
 			if(this.elems.hasOwnProperty(key)) {
 				this.elems[key].addEventListener('change', function(){
-					this.brot.update();
+					win.brot.update();
 				});
 			}
 		}
