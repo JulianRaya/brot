@@ -193,7 +193,7 @@ xtnd(Brot.prototype, {
 				panel.settings.cyMax = this.cy.max;
 				panel.settings.maxI = this.ctrl.I();
 				panel.settings.zoom = this.ctrl.Z();
-
+        
 				panel.onFree = function () {
 					if (++numFree == b.panels.length) {
 						b.ctrl.enbl();
