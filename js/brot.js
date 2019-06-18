@@ -83,7 +83,7 @@ xtnd(BrotCtrl.prototype, {
 
     var ctrl = this;
     win.addEventListener('keydown', function (e) {
-      if (e.ctrlKey) {
+      if (e.ctrlKey || e.shiftKey) {
         switch (e.keyCode) {
           case Key.UP:
             ctrl.elems.z.value = ctrl.Z() + parseFloat(ctrl.elems.z.step);
