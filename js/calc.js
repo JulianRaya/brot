@@ -26,9 +26,9 @@ self.onmessage = function(e){
 				brot.imgData.data[pixel + 2] = (i * 40) % 256;
 				brot.imgData.data[pixel + 3] = 256;
 			} else {
-				brot.imgData.data[pixel  ] = (zx2 * brot.width) % 256;
-				brot.imgData.data[pixel + 1] = (zy2 * brot.height) % 256;
-				brot.imgData.data[pixel + 2] = ((zy2 * zx2 / 2) * (brot.width * brot.height / 2)) % 256;
+				brot.imgData.data[pixel ] = (zx2 * 128) % 256;
+				brot.imgData.data[pixel + 1 ] = (zy2 * 128) % 256;
+				brot.imgData.data[pixel + 2] = ((zx2 + zy2) * 128) % 256;
 				brot.imgData.data[pixel + 3] = 256;
 			}
 
