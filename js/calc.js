@@ -42,13 +42,8 @@ self.onmessage = function(e){
 
 
 self.onerror = function (message) {
-	log('worker error');
+	self.postMessage({
+        type: 'debug',
+        msg: message
+    });
 };
-
-function log(msg) {
-	var object = {
-		type: 'debug',
-		msg: msg + ' [' + Date.now() + ']'
-	};
-	self.postMessage(object);
-}
