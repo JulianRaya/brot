@@ -57,3 +57,7 @@ body {
 #renderTime {
 	font-weight: bold;
 }
+
+canvas {
+	position: absolute;
+}

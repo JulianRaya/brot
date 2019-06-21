@@ -16,14 +16,13 @@ var xtnd = function xtnd() {
 
 
 function BrotCtrl() {
-  this.elems = {};
-  xtnd(this.elems, {
+  this.elems = {
     z: doc.getElementById('zoom'),
     x: doc.getElementById('xOffset'),
     y: doc.getElementById('yOffset'),
     i: doc.getElementById('iterations'),
     t: doc.getElementById('renderTime')
-  });
+  }
 }
 
 xtnd(BrotCtrl.prototype, {
@@ -160,40 +159,57 @@ xtnd(BrotPanel.prototype, {
 
 function Brot() {
   this.panels = [];
-  this.panelWidth = this.width / this.numWorkers;
+  this.panelWidth = Math.round(this.width / this.numPanelsX);
+  this.panelHeight = Math.round(this.height / this.numPanelsY);
   this.cx = {};
   this.cy = {};
   this.ctrl = new BrotCtrl();
   this.ctrl.brot = this;
-
 }
 
 xtnd(Brot.prototype, {
   width: win.innerWidth,
   height: win.innerHeight,
   maxI: 200,
-  numWorkers: 6,
+  numPanelsX: 6,
+  numPanelsY: 3,
   working: false,
   cxCy: function () {
     var offY = this.ctrl.Y();
     var offX = this.ctrl.X();
     var zoom = this.ctrl.Z();
+
+    // multiply by w/h ratio of screen because screen is not square
     this.cx.min = ((-2.0 * (this.width / this.height)) / zoom) - offX;
     this.cx.max = ((2.0 * (this.width / this.height)) / zoom) - offX;
-    this.cx.step = (this.cx.max - this.cx.min) / this.numWorkers;
-    this.cy.min = (-2.0 / zoom) - offY,
-        this.cy.max = (2.0 / zoom) - offY
+    this.cx.step = (this.cx.max - this.cx.min) / this.numPanelsX;
+
+    this.cy.min = (-2.0 / zoom) - offY;
+    this.cy.max = (2.0 / zoom) - offY;
+    this.cy.step = (this.cy.max - this.cy.min) / this.numPanelsY;
+
   },
   init: function (contentDiv) {
-    this.cxCy();
-    for (var i = 0; i < this.numWorkers; i++) {
-      var thisCxMin = this.cx.min + (this.cx.step * i);
-      var thisCxMax = thisCxMin + this.cx.step;
 
-      var panel = this.panels[i] = new BrotPanel(this.panelWidth, this.height, this.cy.min, this.cy.max, thisCxMin, thisCxMax, this.maxI);
-      panel.work();
-      panel.cvs.style.left = (i * this.panelWidth) + 'px';
-      contentDiv.appendChild(panel.cvs);
+    this.cxCy();
+    for (var y = 0; y < this.numPanelsY; y++) {
+
+      this.panels[y] = [];
+
+      var thisCyMin = this.cy.min + (this.cy.step * y);
+      var thisCyMax = thisCyMin + this.cy.step;
+
+      for (var x = 0; x < this.numPanelsX; x++) {
+
+        var thisCxMin = this.cx.min + (this.cx.step * x);
+        var thisCxMax = thisCxMin + this.cx.step;
+
+        var panel = this.panels[y][x] = new BrotPanel(this.panelWidth, this.panelHeight, thisCyMin, thisCyMax, thisCxMin, thisCxMax, this.maxI);
+        panel.work();
+        panel.cvs.style.left = Math.round(x * this.panelWidth) + 'px';
+        panel.cvs.style.top = Math.round(y * this.panelHeight) + 'px';
+        contentDiv.appendChild(panel.cvs);
+      }
     }
 
     this.ctrl.setEvents();
@@ -211,23 +227,28 @@ xtnd(Brot.prototype, {
 
       this.working = true;
 
-      for (var i = 0; i < this.panels.length; i++) {
-        var panel = this.panels[i];
-        panel.settings.cxMin = this.cx.min + (this.cx.step * i);
-        panel.settings.cxMax = panel.settings.cxMin + this.cx.step;
-        panel.settings.cyMin = this.cy.min;
-        panel.settings.cyMax = this.cy.max;
-        panel.settings.maxI = this.ctrl.I();
-        panel.settings.zoom = this.ctrl.Z();
+      for(var y = 0; y < this.numPanelsY; y++) {
+        for (var x = 0; x < this.numPanelsX; x++) {
 
-        panel.onFree = function () {
-          if (++numFree == b.panels.length) {
-            b.ctrl.enbl();
-            b.ctrl.elems.t.innerText = (Date.now() - rendStart) + 'ms';
-            b.working = false;
-          }
-        };
-        panel.work();
+          var panel = this.panels[y][x];
+          panel.settings.cxMin = this.cx.min + (this.cx.step * x);
+          panel.settings.cxMax = panel.settings.cxMin + this.cx.step;
+
+          panel.settings.cyMin = this.cy.min + (this.cy.step * y);
+          panel.settings.cyMax = panel.settings.cyMin + this.cy.step;
+
+          panel.settings.maxI = this.ctrl.I();
+          panel.settings.zoom = this.ctrl.Z();
+
+          panel.onFree = function () {
+            if (++numFree == b.numPanelsX * b.numPanelsY) {
+              b.ctrl.enbl();
+              b.ctrl.elems.t.innerText = (Date.now() - rendStart) + 'ms';
+              b.working = false;
+            }
+          };
+          panel.work();
+        }
       }
     }
   }
