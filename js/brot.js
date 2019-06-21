@@ -3,7 +3,7 @@
 var doc = document;
 var win = window;
 
-var xtnd = function xtnd() {
+function xtnd() {
     for (var i = 1; i < arguments.length; i++) {
         for (var key in arguments[i]) {
             if (arguments[i].hasOwnProperty(key)) {
@@ -15,107 +15,77 @@ var xtnd = function xtnd() {
 };
 
 
-function BrotCtrl() {
+function ControlPanel(brot) {
+    this.brot = brot;
     this.elems = {
         z: doc.getElementById('zoom'),
         x: doc.getElementById('xOffset'),
         y: doc.getElementById('yOffset'),
         i: doc.getElementById('iterations'),
         t: doc.getElementById('renderTime')
-    }
+    };
+
+    Object.values(this.elems).forEach(function(el){
+        el.addEventListener('input', function(){
+            brot.update();
+        });
+    })
 }
 
-xtnd(BrotCtrl.prototype, {
-    Z: function () {
+xtnd(ControlPanel.prototype, {
+    getZoom: function () {
         return parseInt(this.elems.z.value)
     },
-    X: function () {
+    getXOffset: function () {
         return parseFloat(this.elems.x.value)
     },
-    Y: function () {
+    getYOffset: function () {
         return parseFloat(this.elems.y.value)
     },
-    I: function () {
+    getIterations: function () {
         return parseInt(this.elems.i.value)
     },
-    T: function () {
-        return parseInt(this.elems.t.value)
-    },
-
-    dsbl: function () {
-        for (var key in this.elems) {
-            if (this.elems.hasOwnProperty(key)) {
-                this.elems[key].setAttribute('disabled', 'disabled');
-            }
-        }
-    },
-    enbl: function () {
-        for (var key in this.elems) {
-            if (this.elems.hasOwnProperty(key)) {
-                this.elems[key].removeAttribute('disabled');
-            }
-        }
-    },
     setSteps: function () {
-        var zoom = this.Z();
+        var zoom = this.getZoom();
         var cStep = 0.5 / zoom;
         var zStep = Math.abs(Math.ceil(zoom / 10) || 1);
 
         if (cStep) {
-            this.elems.x.setAttribute('step', cStep + '');
-            this.elems.y.setAttribute('step', cStep + '');
+            this.elems.x.setAttribute('step', cStep);
+            this.elems.y.setAttribute('step', cStep);
         }
 
-        this.elems.z.setAttribute('step', zStep + '');
+        this.elems.z.setAttribute('step', zStep);
 
     },
     setEvents: function () {
-        for (var key in this.elems) {
-            if (this.elems.hasOwnProperty(key)) {
-                this.elems[key].addEventListener('change', function () {
-                    win.brot.update();
-                });
-            }
-        }
 
         var Key = {UP: 38, RIGHT: 39, DOWN: 40, LEFT: 37};
+        var actions = {
+            shift:{},
+            noshift:{}
+        };
+        actions.shift[Key.UP]    = ()=> this.elems.z.value = this.getZoom() + parseInt(this.elems.z.step);
+        actions.shift[Key.DOWN]  = ()=> this.elems.z.value = this.getZoom() - parseInt(this.elems.z.step);
+        actions.shift[Key.LEFT]  = ()=> this.elems.i.value = this.getIterations() - parseInt(this.elems.i.step);
+        actions.shift[Key.RIGHT] = ()=> this.elems.i.value = this.getIterations() + parseInt(this.elems.i.step);
 
-        var ctrl = this;
+        actions.noshift[Key.UP]    = ()=> this.elems.y.value = this.getYOffset() + parseFloat(this.elems.y.step);
+        actions.noshift[Key.DOWN]  = ()=> this.elems.y.value = this.getYOffset() - parseFloat(this.elems.y.step);
+        actions.noshift[Key.LEFT]  = ()=> this.elems.x.value = this.getXOffset() + parseFloat(this.elems.x.step);
+        actions.noshift[Key.RIGHT] = ()=> this.elems.x.value = this.getXOffset() - parseFloat(this.elems.x.step);
+
+        var brot = this.brot;
         win.addEventListener('keydown', function (e) {
-            if (e.ctrlKey || e.shiftKey) {
-                switch (e.keyCode) {
-                    case Key.UP:
-                        ctrl.elems.z.value = ctrl.Z() + parseFloat(ctrl.elems.z.step);
-                        break;
-                    case Key.DOWN:
-                        ctrl.elems.z.value = ctrl.Z() - parseFloat(ctrl.elems.z.step);
-                        break;
-                    case Key.LEFT:
-                        ctrl.elems.i.value = ctrl.I() - parseFloat(ctrl.elems.i.step);
-                        break;
-                    case Key.RIGHT:
-                        ctrl.elems.i.value = ctrl.I() + parseFloat(ctrl.elems.i.step);
-                        break;
+            if(!brot.working){
+                if (Object.values(Key).some(k => k === e.keyCode)) {
+                    if (e.ctrlKey || e.shiftKey) {
+                        actions.shift[e.keyCode]();
+                    } else {
+                        actions.noshift[e.keyCode]();
+                    }
+                    brot.update();
                 }
-            } else {
-                switch (e.keyCode) {
-                    case Key.UP:
-                        ctrl.elems.y.value = ctrl.Y() + parseFloat(ctrl.elems.y.step);
-                        break;
-                    case Key.DOWN:
-                        ctrl.elems.y.value = ctrl.Y() - parseFloat(ctrl.elems.y.step);
-                        break;
-                    case Key.LEFT:
-                        ctrl.elems.x.value = ctrl.X() + parseFloat(ctrl.elems.x.step);
-                        break;
-                    case Key.RIGHT:
-                        ctrl.elems.x.value = ctrl.X() - parseFloat(ctrl.elems.x.step);
-                        break;
-                }
-            }
-
-            if (([37, 38, 39, 40]).indexOf(e.keyCode) != -1) {
-                this.brot.update();
             }
 
         });
@@ -163,7 +133,7 @@ function Brot() {
     this.panelHeight = Math.round(this.height / this.numPanelsY);
     this.cx = {};
     this.cy = {};
-    this.ctrl = new BrotCtrl();
+    this.ctrl = new ControlPanel(this);
     this.ctrl.brot = this;
 }
 
@@ -172,12 +142,12 @@ xtnd(Brot.prototype, {
     height: win.innerHeight,
     maxI: 200,
     numPanelsX: 6,
-    numPanelsY: 3,
+    numPanelsY: 4,
     working: false,
     cxCy: function () {
-        var offY = this.ctrl.Y();
-        var offX = this.ctrl.X();
-        var zoom = this.ctrl.Z();
+        var offY = this.ctrl.getYOffset();
+        var offX = this.ctrl.getXOffset();
+        var zoom = this.ctrl.getZoom();
 
         // multiply by w/h ratio of screen because screen is not square
         this.cx.min = ((-2.0 * (this.width / this.height)) / zoom) - offX;
@@ -216,14 +186,13 @@ xtnd(Brot.prototype, {
         this.update();
     },
     update: function () {
+        this.ctrl.setSteps();
         if (!this.working) {
             var numFree = 0;
             var rendStart = Date.now();
             var b = this;
 
             this.cxCy();
-            this.ctrl.dsbl();
-            this.ctrl.setSteps();
 
             this.working = true;
 
@@ -237,12 +206,11 @@ xtnd(Brot.prototype, {
                     panel.settings.cyMin = this.cy.min + (this.cy.step * y);
                     panel.settings.cyMax = panel.settings.cyMin + this.cy.step;
 
-                    panel.settings.maxI = this.ctrl.I();
-                    panel.settings.zoom = this.ctrl.Z();
+                    panel.settings.maxI = this.ctrl.getIterations();
+                    panel.settings.zoom = this.ctrl.getZoom();
 
                     panel.onFree = function () {
-                        if (++numFree == b.numPanelsX * b.numPanelsY) {
-                            b.ctrl.enbl();
+                        if (++numFree === b.numPanelsX * b.numPanelsY) {
                             b.ctrl.elems.t.innerText = (Date.now() - rendStart) + 'ms';
                             b.working = false;
                         }
