@@ -3,20 +3,7 @@
 var doc = document;
 var win = window;
 
-function xtnd() {
-    for (var i = 1; i < arguments.length; i++) {
-        for (var key in arguments[i]) {
-            if (arguments[i].hasOwnProperty(key)) {
-                arguments[0][key] = arguments[i][key];
-            }
-        }
-    }
-    return arguments[0];
-};
-
-
 function ControlPanel(brot) {
-    this.brot = brot;
     this.elems = {
         z: doc.getElementById('zoom'),
         x: doc.getElementById('xOffset'),
@@ -29,10 +16,39 @@ function ControlPanel(brot) {
         el.addEventListener('input', function(){
             brot.update();
         });
-    })
+    });
+
+    var Key = {UP: 38, RIGHT: 39, DOWN: 40, LEFT: 37};
+    var actions = {
+        shift:{},
+        noshift:{}
+    };
+    actions.shift[Key.UP]    = ()=> this.elems.z.value = this.getZoom() + parseInt(this.elems.z.step);
+    actions.shift[Key.DOWN]  = ()=> this.elems.z.value = this.getZoom() - parseInt(this.elems.z.step);
+    actions.shift[Key.LEFT]  = ()=> this.elems.i.value = this.getIterations() - parseInt(this.elems.i.step);
+    actions.shift[Key.RIGHT] = ()=> this.elems.i.value = this.getIterations() + parseInt(this.elems.i.step);
+
+    actions.noshift[Key.UP]    = ()=> this.elems.y.value = this.getYOffset() + parseFloat(this.elems.y.step);
+    actions.noshift[Key.DOWN]  = ()=> this.elems.y.value = this.getYOffset() - parseFloat(this.elems.y.step);
+    actions.noshift[Key.LEFT]  = ()=> this.elems.x.value = this.getXOffset() + parseFloat(this.elems.x.step);
+    actions.noshift[Key.RIGHT] = ()=> this.elems.x.value = this.getXOffset() - parseFloat(this.elems.x.step);
+
+    win.addEventListener('keydown', function (e) {
+        if(!brot.working){
+            if (Object.values(Key).some(k => k === e.keyCode)) {
+                if (e.ctrlKey || e.shiftKey) {
+                    actions.shift[e.keyCode]();
+                } else {
+                    actions.noshift[e.keyCode]();
+                }
+                brot.update();
+            }
+        }
+
+    });
 }
 
-xtnd(ControlPanel.prototype, {
+Object.assign(ControlPanel.prototype, {
     getZoom: function () {
         return parseInt(this.elems.z.value)
     },
@@ -57,38 +73,6 @@ xtnd(ControlPanel.prototype, {
 
         this.elems.z.setAttribute('step', zStep);
 
-    },
-    setEvents: function () {
-
-        var Key = {UP: 38, RIGHT: 39, DOWN: 40, LEFT: 37};
-        var actions = {
-            shift:{},
-            noshift:{}
-        };
-        actions.shift[Key.UP]    = ()=> this.elems.z.value = this.getZoom() + parseInt(this.elems.z.step);
-        actions.shift[Key.DOWN]  = ()=> this.elems.z.value = this.getZoom() - parseInt(this.elems.z.step);
-        actions.shift[Key.LEFT]  = ()=> this.elems.i.value = this.getIterations() - parseInt(this.elems.i.step);
-        actions.shift[Key.RIGHT] = ()=> this.elems.i.value = this.getIterations() + parseInt(this.elems.i.step);
-
-        actions.noshift[Key.UP]    = ()=> this.elems.y.value = this.getYOffset() + parseFloat(this.elems.y.step);
-        actions.noshift[Key.DOWN]  = ()=> this.elems.y.value = this.getYOffset() - parseFloat(this.elems.y.step);
-        actions.noshift[Key.LEFT]  = ()=> this.elems.x.value = this.getXOffset() + parseFloat(this.elems.x.step);
-        actions.noshift[Key.RIGHT] = ()=> this.elems.x.value = this.getXOffset() - parseFloat(this.elems.x.step);
-
-        var brot = this.brot;
-        win.addEventListener('keydown', function (e) {
-            if(!brot.working){
-                if (Object.values(Key).some(k => k === e.keyCode)) {
-                    if (e.ctrlKey || e.shiftKey) {
-                        actions.shift[e.keyCode]();
-                    } else {
-                        actions.noshift[e.keyCode]();
-                    }
-                    brot.update();
-                }
-            }
-
-        });
     }
 });
 
@@ -117,7 +101,7 @@ function BrotPanel(width, height, cyMin, cyMax, cxMin, cxMax, maxI) {
     };
 }
 
-xtnd(BrotPanel.prototype, {
+Object.assign(BrotPanel.prototype, {
     work: function () {
         this.settings.imgData = this.ctx.createImageData(this.settings.width, this.settings.height);
         this.worker.postMessage(this.settings);
@@ -137,7 +121,7 @@ function Brot() {
     this.ctrl.brot = this;
 }
 
-xtnd(Brot.prototype, {
+Object.assign(Brot.prototype, {
     width: win.innerWidth,
     height: win.innerHeight,
     maxI: 200,
@@ -182,7 +166,6 @@ xtnd(Brot.prototype, {
             }
         }
 
-        this.ctrl.setEvents();
         this.update();
     },
     update: function () {
